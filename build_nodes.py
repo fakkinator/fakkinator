@@ -6,10 +6,10 @@ def build_nodes(xdim, ydim):
     for y in range(ydim):
         for x in range(xdim):
             print("[{},{},{},{}],".format(
-                i-xdim if y is not 0 else None,
-                i+xdim if y is not ydim-1 else None,
-                i-1 if x is not 0 else None,
-                i+1 if x is not xdim-1 else None,
+                i-xdim if y is not 0 else 'null',
+                i+xdim if y is not ydim-1 else 'null',
+                i-1 if x is not 0 else 'null',
+                i+1 if x is not xdim-1 else 'null',
             ))
             i += 1
     print(']')
