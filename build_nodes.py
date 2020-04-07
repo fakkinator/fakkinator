@@ -16,4 +16,6 @@ def build_nodes(xdim, ydim):
 
 if __name__ == "__main__":
     _, xdim, ydim = argv
+    xdim = int(xdim)
+    ydim = int(ydim)
     build_nodes(xdim, ydim)
