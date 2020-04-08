@@ -21,6 +21,7 @@ def get_scrambled_img_links(url):
     options.add_argument('--headless')
 
     driver = webdriver.Chrome(options=options)
+    driver.set_window_size(2200, 2200)
 
     driver.get(get_page_i(url, 1))
     driver.find_element_by_class_name('js-close').click()
@@ -46,6 +47,7 @@ def get_scrambled_img_links(url):
 def get_imgs(imgs):
     for i, link in enumerate(imgs):
         urllib.request.urlretrieve(link, "{}.png".format(i))
+        print("Downloaded {}: {}".format(i, link))
 
 if __name__ == "__main__":
     URL = sys.argv[1]
