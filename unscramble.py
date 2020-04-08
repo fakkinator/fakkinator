@@ -18,7 +18,10 @@ class ImGrid(object):
         self.x_dim, self.y_dim = dims
         self.xmax = self.x_dim - 1
         self.ymax = self.y_dim - 1
-        self.nodes = [Node()] * (self.x_dim * self.y_dim)
+        self.nodes = [Node() for _ in range(self.x_dim * self.y_dim)]
+        # self.nodes = []
+        # for _ in range(self.x_dim * self.y_dim):
+        #     self.nodes.append(Node())
         with open('nodes.json', 'r') as f:
             cons = json.loads(f.read())
 
@@ -29,12 +32,10 @@ class ImGrid(object):
             if d is not None: node.down = self.nodes[d]
             if l is not None: node.left = self.nodes[l]
             if r is not None: node.right = self.nodes[r]
-            
-            
-
 
     def pack(self, slices):
-        pass
+        for i, img in enumerate(slices):
+            self.nodes[i].img = img
 
 
 def unscramble(img):
@@ -43,7 +44,21 @@ def unscramble(img):
 
 def test():
     im = Image.open('1.png')
-    grid = ImGrid((2, 3))
+    slices = []
+    I = 128
+    J = 128
+    for j in range(0, 1920, J):
+        for i in range(0, 1408, I):
+            print(i, j)
+            box = (i, j, i+I, j+J)
+            # box = (j, i, j+J, i+I)
+            slices.append(im.crop(box))
+
+    grid = ImGrid((11, 15))
+    grid.pack(slices)
+    grid.nodes[30].img.show()
+    grid.nodes[30].up.img.show()
+    grid.nodes[30].left.img.show()
 
 
 
