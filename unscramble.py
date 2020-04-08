@@ -17,6 +17,18 @@ class Node(object):
         self.l = None
         self.r = None
 
+    def __getitem__(self, key):
+        if key == 'u':
+            return self.u
+        elif key == 'd':
+            return self.d
+        elif key == 'l':
+            return self.l
+        elif key == 'r':
+            return self.r
+        else:
+            return None
+
     def get_edge(self, side):
         slack=1
         if side == 'u':
@@ -49,6 +61,11 @@ class ImGrid(object):
     def pack(self, slices):
         for i, img in enumerate(slices):
             self.nodes[i].img = img
+
+    def get_canidates(self, side):
+        canidates = {}
+        for i, node in enumerate(self.nodes):
+            
 
     @staticmethod
     def get_slices(path):
