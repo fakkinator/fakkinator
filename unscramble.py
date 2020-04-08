@@ -40,6 +40,26 @@ class Node(object):
         elif side == 'r':
             return self.img.crop((self.img.width-slack, 0, self.img.width, self.img.height))
 
+    def dist(self, node, side_a, side_b):
+        side_a_img = self.get_edge(side_a)
+        side_a_arr = np.array(side_a_img.getdata())
+        side_b_img = node.get_edge(side_b)
+        side_b_arr = np.array(side_b_img.getdata())
+
+        return linalg.norm(side_a_arr - side_b_arr)
+
+    def get_surround_dist(self):
+        tot = 0
+        if self.u:
+            tot += self.dist(self.u, 'u', 'd')
+        if self.d:
+            tot += self.dist(self.d, 'd', 'u')
+        if self.l:
+            tot += self.dist(self.l, 'l', 'r')
+        if self.r:
+            tot += self.dist(self.r, 'r', 'l')
+        return tot
+
 
 class ImGrid(object):
     def __init__(self, dims):
@@ -102,28 +122,50 @@ def test2():
     grid = ImGrid((11, 15))
     slices = grid.get_slices('0.png')
     grid.pack(slices)
-    grab_bag = [node.img for node in grid.nodes]
+    used = []
+    for i in range(70, 75):
+        nodei = grid.nodes[i]
+        dists = [nodei.dist(node, 'r', 'l') for node in grid.nodes]
+        print(dists)
+        imin = np.argmin(dists)
+        print(imin)
+        nodeimin = grid.nodes[imin]
+        while nodeimin in used:
+            dists.pop(imin)
+            imin = np.argmin(dists)
+            nodeimin = grid.nodes[imin]
+        t = grid.nodes[i+1].img
+        grid.nodes[i+1].img = nodeimin.img
+        nodeimin.img = t
+        used.append(grid.nodes[i+1])
+        used.append(nodeimin)
+
+    for i in range(25, 30):
+        grid.nodes[i].img.show()
+        time.sleep(1)
+
+    print()
+
 
     # construct strips
-    pos = 0
-    for y in range(15):
-        for x in range(10):
-            V = np.array(grid.nodes[pos].get_edge('l').getdata())
-            canidates = {
-                i:np.array(grid.nodes[i].get_edge('r').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None
-            }
-            diffs = {i:linalg.norm(V - canidates[i]) for i in canidates.keys()}
+    # for y in range(15):
+    #     for x in range(10):
+    #         V = np.array(grid.nodes[pos].get_edge('l').getdata())
+    #         canidates = {
+    #             i:np.array(grid.nodes[i].get_edge('r').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None
+    #         }
+    #         diffs = {i:linalg.norm(V - canidates[i]) for i in canidates.keys()}
 
-            ilow = random.choice(list(diffs.keys()))
-            for j, val in diffs.items():
-                if val < diffs[ilow]:
-                    ilow = j
+    #         ilow = random.choice(list(diffs.keys()))
+    #         for j, val in diffs.items():
+    #             if val < diffs[ilow]:
+    #                 ilow = j
 
-            t = grid.nodes[ilow].img
-            grid.nodes[ilow].img = grid.nodes[pos+1].img
-            grid.nodes[pos+1].img = t
+    #         t = grid.nodes[ilow].img
+    #         grid.nodes[ilow].img = grid.nodes[pos+1].img
+    #         grid.nodes[pos+1].img = t
 
-            pos += 1
+    #         pos += 1
 
     # outims = []
     # os = 0
@@ -137,19 +179,15 @@ def test2():
     # for i in range(1, 15):
     #     outim = get_concat_v(outim, outims[i])
     # imout = grid.nodes[30].img
-    w, l = 1408, 1920
-    imout = Image.new('RGB', (w, l))
-    pos = 0
-    for j in range(1, l, 128):
-        for i in range(1, w, 128):
-            imout.paste(grid.nodes[pos].img, (i, j))
-            pos += 1
+    # w, l = 1408, 1920
+    # imout = Image.new('RGB', (w, l))
+    # pos = 0
+    # for j in range(1, l, 128):
+    #     for i in range(1, w, 128):
+    #         imout.paste(grid.nodes[pos].img, (i, j))
+    #         pos += 1
     
-    imout.show()
-
-
-
-    imout.show()
+    # imout.show()
 
 
 def test():
