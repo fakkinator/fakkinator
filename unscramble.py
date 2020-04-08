@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 from sys import argv
 import json
+import random
+import time
 
 from PIL import Image
+import numpy as np
+from numpy import linalg
 
 
 class Node(object):
@@ -14,14 +18,15 @@ class Node(object):
         self.r = None
 
     def get_edge(self, side):
+        slack=1
         if side == 'u':
-            return self.img.crop((0, 0, self.img.width ,1))
+            return self.img.crop((0, 0, self.img.width ,slack))
         elif side == 'd':
-            return self.img.crop((0, self.img.height-1, self.img.width, self.img.height))
+            return self.img.crop((0, self.img.height-slack, self.img.width, self.img.height))
         elif side == 'l':
-            return self.img.crop((0, 0, 1, self.img.height))
+            return self.img.crop((0, 0, slack, self.img.height))
         elif side == 'r':
-            return self.img.crop((self.img.width-1, 0, self.img.width, self.img.height))
+            return self.img.crop((self.img.width-slack, 0, self.img.width, self.img.height))
 
 
 class ImGrid(object):
@@ -53,7 +58,6 @@ class ImGrid(object):
         J = 128
         for j in range(0, 1920, J):
             for i in range(0, 1408, I):
-                print(i, j)
                 box = (i, j, i+I, j+J)
                 # box = (j, i, j+J, i+I)
                 slices.append(im.crop(box))
@@ -64,10 +68,30 @@ def unscramble(img):
     pass
 
 def test():
+    seq = []
 
     grid = ImGrid((11, 15))
-    slices = grid.get_slices('1.png')
+    slices = grid.get_slices('0.png')
     grid.pack(slices)
+    # grid.nodes[42].img.show()
+    # grid.nodes[125].img.show()
+    seq.append(grid.nodes[42])
+    for i in range(42, 47):
+
+        V = np.array(grid.nodes[i].get_edge('r').getdata())
+        canidates = {i:np.array(grid.nodes[i].get_edge('l').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None}
+        diffs = {i:linalg.norm(V - canidates[i]) for i in canidates.keys()}
+
+        ilow = random.choice(list(diffs.keys()))
+        for i, val in diffs.items():
+            if val < diffs[ilow]:
+                ilow = i
+        print(ilow, diffs[ilow])
+        seq.append(grid.nodes[ilow])
+
+    for node in seq:
+        node.img.show()
+        time.sleep(1)
 
 
 
