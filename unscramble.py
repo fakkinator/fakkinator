@@ -65,8 +65,10 @@ class ImGrid(object):
     def get_canidates(self, side):
         canidates = {}
         for i, node in enumerate(self.nodes):
+            if node[side] is not None:
+                canidates[i] = node[side]
+        return canidates
             
-
     @staticmethod
     def get_slices(path):
         im = Image.open(path)
@@ -96,7 +98,7 @@ def test():
     for i in range(42, 47):
 
         V = np.array(grid.nodes[i].get_edge('r').getdata())
-        canidates = {i:np.array(grid.nodes[i].get_edge('l').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None}
+        # canidates = {i:np.array(grid.nodes[i].get_edge('l').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None}
         diffs = {i:linalg.norm(V - canidates[i]) for i in canidates.keys()}
 
         ilow = random.choice(list(diffs.keys()))
