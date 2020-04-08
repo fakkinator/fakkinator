@@ -62,8 +62,9 @@ class Node(object):
 
 
 class ImGrid(object):
-    def __init__(self, dims):
-        self.x_dim, self.y_dim = dims
+    def __init__(self, node_dims, img_dims):
+        self.img_dims = img_dims
+        self.x_dim, self.y_dim = node_dims
         self.xmax = self.x_dim - 1
         self.ymax = self.y_dim - 1
         self.nodes = [Node() for _ in range(self.x_dim * self.y_dim)]
@@ -77,10 +78,28 @@ class ImGrid(object):
             if d is not None: node.d = self.nodes[d]
             if l is not None: node.l = self.nodes[l]
             if r is not None: node.r = self.nodes[r]
+    
+    def __getitem__(self, key):
+        return self.nodes[key]
 
     def pack(self, slices):
         for i, img in enumerate(slices):
             self.nodes[i].img = img
+
+    def flip(self, a, b):
+        if isinstance(a, Node):
+            node_a = a
+        else:
+            node_a = self.nodes[a]
+
+        if isinstance(b, Node):
+            node_b = b
+        else:
+            node_b = self.nodes[b]
+
+        t = node_a.img
+        node_a.img = node_b.img
+        node_b.img = t
 
     def get_canidates(self, side):
         canidates = {}
@@ -88,17 +107,32 @@ class ImGrid(object):
             if node[side] is not None:
                 canidates[i] = node[side]
         return canidates
+
+    def build_img(self):
+        w, l = self.img_dims
+        imout = Image.new('RGB', (w, l))
+        pos = 0
+        for j in range(1, l, 128):
+            for i in range(1, w, 128):
+                imout.paste(self.nodes[pos].img, (i, j))
+                pos += 1
+        
+        return imout
+
+    def dump_cells(self, path):
+        for i, node in enumerate(self.nodes):
+            node.img.save('{}/{}.png'.format(path, i))
             
     @staticmethod
-    def get_slices(path):
+    def get_slices(path, img_dims):
+        W, L = img_dims
         im = Image.open(path)
         slices = []
         I = 128
         J = 128
-        for j in range(0, 1920, J):
-            for i in range(0, 1408, I):
+        for j in range(0, L, J):
+            for i in range(0, W, I):
                 box = (i, j, i+I, j+J)
-                # box = (j, i, j+J, i+I)
                 slices.append(im.crop(box))
 
         return slices
@@ -119,32 +153,35 @@ def get_concat_v(im1, im2):
     return dst
 
 def test2():
-    grid = ImGrid((11, 15))
-    slices = grid.get_slices('0.png')
+    W, L = 3, 3
+    img_dims = (384, 384)
+    grid = ImGrid((L, W), img_dims)
+    slices = grid.get_slices('0.png', img_dims)
     grid.pack(slices)
-    used = []
-    for i in range(70, 75):
-        nodei = grid.nodes[i]
-        dists = [nodei.dist(node, 'r', 'l') for node in grid.nodes]
-        print(dists)
-        imin = np.argmin(dists)
-        print(imin)
-        nodeimin = grid.nodes[imin]
-        while nodeimin in used:
-            dists.pop(imin)
+
+    for _ in range(1):
+        for i in range(0, L*W):
+            if not grid[i].r:
+                continue
+            dists = [grid[i].dist(node, 'r', 'l') for node in grid.nodes]
             imin = np.argmin(dists)
-            nodeimin = grid.nodes[imin]
-        t = grid.nodes[i+1].img
-        grid.nodes[i+1].img = nodeimin.img
-        nodeimin.img = t
-        used.append(grid.nodes[i+1])
-        used.append(nodeimin)
+            print(i, imin, min(dists))
+            grid.flip(grid[i].r, imin)
 
-    for i in range(25, 30):
-        grid.nodes[i].img.show()
-        time.sleep(1)
 
-    print()
+    # for _ in range(1):
+    #     for i in range(0, 11*15):
+    #         if not grid[i].r:
+    #             continue
+    #         dists = [grid[i].dist(node, 'r', 'l') for node in grid.nodes]
+    #         imin = np.argmin(dists)
+    #         print(i, imin, min(dists))
+    #         t = grid[i].r.img
+    #         grid[i].r.img = grid[imin].img
+    #         grid[imin].img = t
+
+    # grid.build_img().save('test3.png')
+    grid.build_img().show()
 
 
     # construct strips
@@ -175,19 +212,6 @@ def test2():
     #         im = get_concat_h(im, grid.nodes[i+os].img)
     #     outims.append(im)
 
-    # outim = outims[0]
-    # for i in range(1, 15):
-    #     outim = get_concat_v(outim, outims[i])
-    # imout = grid.nodes[30].img
-    # w, l = 1408, 1920
-    # imout = Image.new('RGB', (w, l))
-    # pos = 0
-    # for j in range(1, l, 128):
-    #     for i in range(1, w, 128):
-    #         imout.paste(grid.nodes[pos].img, (i, j))
-    #         pos += 1
-    
-    # imout.show()
 
 
 def test():
