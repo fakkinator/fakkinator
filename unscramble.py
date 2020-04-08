@@ -13,6 +13,17 @@ class Node(object):
         self.l = None
         self.r = None
 
+    def get_edge(self, side):
+        if side == 'u':
+            return self.img.crop((0, 0, self.img.width ,1))
+        elif side == 'd':
+            return self.img.crop((0, self.img.height-1, self.img.width, self.img.height))
+        elif side == 'l':
+            return self.img.crop((0, 0, 1, self.img.height))
+        elif side == 'r':
+            return self.img.crop((self.img.width-1, 0, self.img.width, self.img.height))
+
+
 class ImGrid(object):
     def __init__(self, dims):
         self.x_dim, self.y_dim = dims
@@ -57,7 +68,6 @@ def test():
     grid = ImGrid((11, 15))
     slices = grid.get_slices('1.png')
     grid.pack(slices)
-    grid.nodes[2].img.show()
 
 
 
