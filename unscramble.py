@@ -86,19 +86,93 @@ class ImGrid(object):
 def unscramble(img):
     pass
 
+def get_concat_h(im1, im2):
+    dst = Image.new('RGB', (im1.width + im2.width, im1.height))
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (im1.width, 0))
+    return dst
+
+def get_concat_v(im1, im2):
+    dst = Image.new('RGB', (im1.width, im1.height + im2.height))
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (0, im1.height))
+    return dst
+
+def test2():
+    grid = ImGrid((11, 15))
+    slices = grid.get_slices('0.png')
+    grid.pack(slices)
+    grab_bag = [node.img for node in grid.nodes]
+
+    # construct strips
+    pos = 0
+    for y in range(15):
+        for x in range(10):
+            V = np.array(grid.nodes[pos].get_edge('l').getdata())
+            canidates = {
+                i:np.array(grid.nodes[i].get_edge('r').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None
+            }
+            diffs = {i:linalg.norm(V - canidates[i]) for i in canidates.keys()}
+
+            ilow = random.choice(list(diffs.keys()))
+            for j, val in diffs.items():
+                if val < diffs[ilow]:
+                    ilow = j
+
+            t = grid.nodes[ilow].img
+            grid.nodes[ilow].img = grid.nodes[pos+1].img
+            grid.nodes[pos+1].img = t
+
+            pos += 1
+
+    # outims = []
+    # os = 0
+    # for os in range(15):
+    #     im = grid.nodes[0+os*11].img
+    #     for i in range(1, 11):
+    #         im = get_concat_h(im, grid.nodes[i+os].img)
+    #     outims.append(im)
+
+    # outim = outims[0]
+    # for i in range(1, 15):
+    #     outim = get_concat_v(outim, outims[i])
+    # imout = grid.nodes[30].img
+    w, l = 1408, 1920
+    imout = Image.new('RGB', (w, l))
+    pos = 0
+    for j in range(1, l, 128):
+        for i in range(1, w, 128):
+            imout.paste(grid.nodes[pos].img, (i, j))
+            pos += 1
+    
+    imout.show()
+
+
+
+    imout.show()
+
+
 def test():
-    seq = []
 
     grid = ImGrid((11, 15))
     slices = grid.get_slices('0.png')
     grid.pack(slices)
     # grid.nodes[42].img.show()
     # grid.nodes[125].img.show()
-    seq.append(grid.nodes[42])
-    for i in range(42, 47):
+    i = 0
+    seq = [grid.nodes[i]]
+    for _ in range(0, 10):
+        nodei = grid.nodes[i]
+        if nodei.u is not None:
+            pass
 
-        V = np.array(grid.nodes[i].get_edge('r').getdata())
-        # canidates = {i:np.array(grid.nodes[i].get_edge('l').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None}
+        if nodei.l is not None:
+            pass
+
+        V = np.array(grid.nodes[i].get_edge('l').getdata())
+        canidates = {
+            i:np.array(grid.nodes[i].get_edge('r').getdata()) for i in range(len(grid.nodes)) if grid.nodes[i].l is not None
+        }
         diffs = {i:linalg.norm(V - canidates[i]) for i in canidates.keys()}
 
         ilow = random.choice(list(diffs.keys()))
@@ -106,6 +180,7 @@ def test():
             if val < diffs[ilow]:
                 ilow = i
         print(ilow, diffs[ilow])
+        i = ilow
         seq.append(grid.nodes[ilow])
 
     for node in seq:
@@ -115,4 +190,4 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    test2()
